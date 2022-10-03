@@ -66,7 +66,8 @@ public class BookRepositoryTest {
         assertDeleteCount(0);
     }
 
-    @DisplayName("Обновить книгу и автора. Число select должно равняться 2")
+    @DisplayName("Обновить книгу и автора, и создать новую " +
+            "книгу у автора (id книги не указан).")
     @Test
     @Rollback
     @Sql({"classpath:sql/1_clear_schema.sql",
@@ -78,9 +79,11 @@ public class BookRepositoryTest {
         Person getPerson = userRepository.findById(1001L)
                 .orElseThrow(() -> new NotFoundException("user not found"));
         Book getBook = bookRepository.findByIdAndPersonId(2002L,1001L);
+        List<Book> getBooks = bookRepository.findByPersonId(1001L);
         //Then
         assertThat(getPerson.getTitle()).isNotEqualTo("reader2");
         assertThat(getBook.getTitle()).isNotEqualTo("test");
+        assertThat(getBooks.size()).isEqualTo(2);
 
         //Given
         Person person = new Person();
@@ -91,23 +94,34 @@ public class BookRepositoryTest {
 
         Person savedPerson = userRepository.save(person);
 
-        Book book = new Book();
-        book.setId(2002L);
-        book.setAuthor("Test Author");
-        book.setTitle("test");
-        book.setPageCount(1000);
-        book.setPerson(savedPerson);
+        Book book1 = new Book();
+        book1.setId(2002L);
+        book1.setAuthor("Test Author");
+        book1.setTitle("test");
+        book1.setPageCount(1000);
+        book1.setPerson(savedPerson);
+
+        Book book2 = new Book();
+        book2.setAuthor("Test Author2");
+        book2.setTitle("test2");
+        book2.setPageCount(2000);
+        book2.setPerson(savedPerson);
 
         //When
-        Book result = bookRepository.save(book);
+        Book result1 = bookRepository.save(book1);
+        Book result2 = bookRepository.save(book2);
+        getBooks = bookRepository.findByPersonId(1001L);
 
         //Then
-        assertThat(result.getPageCount()).isEqualTo(1000);
+        assertThat(result1.getPageCount()).isEqualTo(1000);
+        assertThat(result2.getPageCount()).isEqualTo(2000);
         assertThat(savedPerson.getTitle()).isEqualTo("reader2");
-        assertThat(result.getTitle()).isEqualTo("test");
-        assertSelectCount(2);
-        assertInsertCount(0);
-        assertUpdateCount(0);
+        assertThat(result1.getTitle()).isEqualTo("test");
+        assertThat(result2.getTitle()).isEqualTo("test2");
+        assertThat(getBooks.size()).isEqualTo(3);
+        assertSelectCount(5);
+        assertInsertCount(1);
+        assertUpdateCount(2);
         assertDeleteCount(0);
     }
 
@@ -133,7 +147,7 @@ public class BookRepositoryTest {
         assertDeleteCount(0);
     }
 
-    @DisplayName("Удалить книги и автора. Число select должно равняться 2")
+    @DisplayName("Удалить книги и автора. Число select должно равняться 4")
     @Test
     @Rollback
     @Sql({"classpath:sql/1_clear_schema.sql",

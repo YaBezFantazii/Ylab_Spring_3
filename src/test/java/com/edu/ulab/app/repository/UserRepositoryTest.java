@@ -32,7 +32,9 @@ public class UserRepositoryTest {
     @DisplayName("Сохранить юзера. Число select должно равняться 1")
     @Test
     @Rollback
-    @Sql({"classpath:sql/1_clear_schema.sql"
+    @Sql({"classpath:sql/1_clear_schema.sql",
+            "classpath:sql/2_insert_person_data.sql",
+            "classpath:sql/3_insert_book_data.sql"
     })
     void insertPerson_thenAssertDmlCount() {
         //Given
